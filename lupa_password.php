@@ -5,46 +5,85 @@ include 'config.php';
 error_reporting(0);
  
 session_start();
- 
-if (isset($_SESSION['nama_pembeli'])) {
-    //header("Location: re.php");
+
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\SMTP;
+use PHPMailer\PHPMailer\Exception;
+
+function kirim_email($email_penerima,$nama_penerima,$judul_email,$isi_email ){
+    
+    $email_pengirim = "revansaade@gmail.com";
+    $nama_pengirim = "noreply";
+    
+    //Load Composer's autoloader
+    require getcwd().'/vendor/autoload.php';
+    
+    //Create an instance; passing `true` enables exceptions
+    $mail = new PHPMailer(true);
+    
+    try {
+        //Server settings
+        $mail->SMTPDebug = SMTP::DEBUG_SERVER;                      //Enable verbose debug output
+        $mail->isSMTP();                                            //Send using SMTP
+        $mail->Host       = 'smtp.gmail.com';                     //Set the SMTP server to send through
+        $mail->SMTPAuth   = true;                                   //Enable SMTP authentication
+        $mail->Username   = $email_pengirim;                     //SMTP username
+        $mail->Password   = 'secret';                               //SMTP password
+        $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;            //Enable implicit TLS encryption
+        $mail->Port       = 465;                                    //TCP port to connect to; use 587 if you have set `SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS`
+    
+        //Recipients
+        $mail->setFrom($email_pengirim, $nama_pengirim);
+        $mail->addAddress($email_penerima, $nama_penerima);     //Add a recipient
+        
+    
+        
+        //Content
+        $mail->isHTML(true);                                  //Set email format to HTML
+        $mail->Subject = $judul_email;
+        $mail->Body    = $isi_email;
+       
+    
+        $mail->send();
+        return "sukses" ;
+    } catch (Exception $e) {
+        return "Gagal: {$mail->ErrorInfo}";
+    }
 }
+if (isset($_SESSION['email']) != '') {
+    header("Location: login.php");
+}
+$err    = "";
+$sukses = "";
+$email  = "";
  
 if (isset($_POST['submit'])) {
-    $username = $_POST['nama_pembeli'];
+    
     $email = $_POST['email'];
-    $password = md5($_POST['password']);
-    $cpassword = md5($_POST['cpassword']);
-    $telpon = $_POST['telpon'];
- 
-    if ($password == $cpassword) {
-        $sql = "SELECT * FROM pembeli WHERE  nama_pembeli= '$username'";
-        $result = mysqli_query($conn, $sql);
-        if (!$result->num_rows > 0) {
-            $sql = "UPDATE  pembeli SET password ='$password' Where nama_pembeli='$username'";
-            $result = mysqli_query($conn, $sql);
-            if ($result) {
-                echo "<script>alert('Selamat, registrasi berhasil!')</script>";
-                $username = "";
-                $email = "";
-                $_POST['password'] = "";
-                $_POST['cpassword'] = "";
-            } else {
-                echo "<script>alert('Woops! Terjadi kesalahan.')</script>";
-            }
-        } else {
-            echo "<script>alert('Woops! Email Sudah Terdaftar.')</script>";
+    if ($email == ''){
+        $err = "silahkan masukkan email";
+    }else{
+        $sql1   = "select * from pembeli where email = '$email'";
+        $q1     = mysqli_query($conn,$sql1);
+        $n1     = mysqli_num_rows($q1);
+
+        if($n1<1){
+            $err = "Email : <b>$email</b> tidak ditemukan";
         }
-         
-    } 
-    else {
-        echo "<script>alert('Password Tidak Sesuai')</script>";
     }
 
+    if(empty($err)){
+        $sukses = "Klik <a href='reset_password.php'>disini<a/> untuk mereset pasword";
+
+    }
+
+ 
+    
     
 }
 
 ?>
+
 
 <!DOCTYPE html>
 <html>
@@ -62,20 +101,17 @@ if (isset($_POST['submit'])) {
  <div class="container">
   <form action="" method="POST" class="login-email">
             <p class="login-text" style="font-size: 2rem; font-weight: 800;">Lupa Password</p>
+            <?php if($err){echo "<div class='error'>$err</div>";}?>
+    <?php if($sukses){echo "<div class='sukses'>$sukses</div>";}?>
+   <div class="input-group">
+    <input type="email" placeholder="Email" name="email" value="<?php echo $email; ?>" required>
+   </div>
    
    <div class="input-group">
-    <input type="email" placeholder="Username" name="nama_pembeli" value="<?php echo $username; ?>" required>
+    <button name="submit" class="btn">Kirim</button>
    </div>
-   <div class="input-group">
-    <input type="password" placeholder="Password baru" name="password" value="<?php echo $_POST['password']; ?>" required>
-            </div>
-            <div class="input-group">
-    <input type="password" placeholder="Konfirmasi Password baru" name="cpassword" value="<?php echo $_POST['cpassword']; ?>" required>
-   </div>
-   <div class="input-group">
-    <button name="submit" class="btn">Submit</button>
-   </div>
-   <p class="login-register-text">tidak jadi mengganti password?<a href="login.php">Login </a></p>
+
+   <p class="login-register-text"><a href="login.php">Login </a></p>
   </form>
  </div>
 </body>
