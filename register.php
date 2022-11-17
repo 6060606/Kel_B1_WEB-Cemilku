@@ -18,7 +18,7 @@ if (isset($_POST['submit'])) {
     $telpon = $_POST['telpon'];
  
     if ($password == $cpassword) {
-        $sql = "SELECT * FROM pembeli WHERE email='$email' And password= '$password' And nama_pembeli= '$username'";
+        $sql = "SELECT * FROM pembeli WHERE email='$email' or telpon='$telpon'";
         $result = mysqli_query($conn, $sql);
         if (!$result->num_rows > 0) {
             $sql = "INSERT INTO pembeli (nama_pembeli, email,telpon,password)
@@ -30,11 +30,12 @@ if (isset($_POST['submit'])) {
                 $email = "";
                 $_POST['password'] = "";
                 $_POST['cpassword'] = "";
+                $_POST['telpon'] = "";
             } else {
                 echo "<script>alert('Woops! Terjadi kesalahan.')</script>";
             }
         } else {
-            echo "<script>alert('Woops! Email Sudah Terdaftar.')</script>";
+            echo "<script>alert('Woops! Email atau Nomor Telepon Sudah Terdaftar.')</script>";
         }
          
     } 
@@ -76,7 +77,7 @@ if (isset($_POST['submit'])) {
             <input type="password" placeholder="Confirm Password" name="cpassword" value="<?php echo $_POST['cpassword']; ?>" required>
    </div>
    <div class="input-group">
-    <input type="text" placeholder="No telepon" name="telpon" value="<?php echo $_POST['telpon']; ?>" required>
+    <input type="number" placeholder="No telepon" name="telpon" value="<?php echo $_POST['telpon']; ?>" required>
    </div>
    <div class="input-group">
     <button name="submit" class="btn">Register</button>
